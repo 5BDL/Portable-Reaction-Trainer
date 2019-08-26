@@ -11,9 +11,13 @@ LED_SPEED = 1.0
 num_pixels = 12
 # Timer will be selectable in the future
 timer = 30
+active = 1
+count = 0
+new_button = 1
+x0 = 14
 i2c = io.I2C(board.SCL, board.SDA)
 t_display = adafruit_ht16k33.segments.Seg14x4(i2c, address=0x71)
-b_display = adafruit_ht16k33.segments.Seg14x4(i2c, address=0x72)
+# b_display = adafruit_ht16k33.segments.Seg14x4(i2c, address=0x72)
 # Button LED controller
 b_leds = neopixel.NeoPixel(NPIN, num_pixels, brightness=10, auto_write=False)
 # Button Switch definition
@@ -40,21 +44,8 @@ def random_led(b):
 def reset_leds(col):
     print("LED Reset")
     b_leds.fill(col)
-    
-# display[0] = 'F'
-# display[1] = 'I'
-# display[2] = 'D'
-# display[3] = 'O'
-# display.show()
 
-# Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4()
-
-# alpha4.begin(0x70)
-
-# alpha4.writeDigitRaw(3, 0x0)
-
-# alpha4.writeDigitRaw(0, 0x3FFF)
-
+# Timer Start    
 def timer_start():
     t_display.print('5BDL')
     t_display.show()
@@ -71,40 +62,56 @@ def timer_start():
     t_display.print('GO')
     time.sleep(1)
 
-# def countdown(tc):
-#    display.print(tc)
-#    display.show()
-#    time.sleep(1)
-#    tc = tc - 1
-#    if tc == -1:
-#        display.print('TIME')
-#        display.show()
 
 timer_start()
+reset_leds(BLACK)
+t_display.print(count)
+t_display.show()
+# b_display.print(count)
+# b_display.show()
 
-while timer > -1:
-    t_display.print(timer)
-    t_display.show()
-    time.sleep(1)
-    timer = timer - 1
-    if timer == -1:
-        t_display.print('TIME')
-        t_display.show()
-        
-    b_display.print(timer+1)
-    b_display.show()
-    reset_leds(BLACK)
+while True:
+    while active == 1:
+    #    t_display.print(timer)
+    #    t_display.show()
+    #    time.sleep(1)
+    #    timer = timer - 1
     # choose random LED
-    x = random_led(num_pixels)
-    b_leds[x] = WHITE
-    b_leds.show()
-    print("random LED")
-    
-    for button in buttons:
-        if not button.value:  # pressed?
-            i = buttons.index(button)
- 
-            print("Button #%d Pressed" % i)
+        if new_button == 1:
+            x = random_led(num_pixels)
+            print("x is %d" % x)
+            print("x0 is %d" % x0)
+            while x0 == x:
+                x = random_led(num_pixels)
+                print("x0, x were equal - new random")
+            reset_leds(BLACK)
+            b_leds[x] = WHITE
+            print("LED #%d Lit" % x)
+            b_leds.show()
+            new_button = 0
+            x0 = x
+    # monitor button presses
+        for button in buttons:
+            if not button.value:  # pressed?
+                i = buttons.index(button)
+                print("Button #%d Pressed" % i)
+                if i == x:
+                    count = count + 1
+                    print("Count is %d" % count)
+                    t_display.print('    ')
+                    t_display.print(count)
+                    t_display.show()
+                    new_button = 1
+        if timer == -1:
+            t_display.print('TIME')
+            t_display.show()
+            active = 0
+
+    # i = buttons.index(button)
+    # print("Button #%d Pressed" % i)
+    # if i == x:
+    #    count = count + 1
+    #    new_button = 1
     
     
 # TO DO
@@ -113,5 +120,3 @@ while timer > -1:
 # - Configurable - Timer
 # - Reaction Time Algorithm
 # - 
-    
-    
