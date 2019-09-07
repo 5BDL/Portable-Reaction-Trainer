@@ -1,0 +1,206 @@
+import board
+import busio as io
+import digitalio
+import adafruit_ht16k33.segments
+import time
+import neopixel
+import random
+
+# Initialize Parameters
+NPIN = board.A0
+LED_SPEED = 1.0
+num_pixels = 12
+
+# Initialize Variables
+game_state = 0
+# game state 
+# 0 - pregame
+# 1 - select time
+# 2 - playing
+# 3 - post-game
+# 4 - TBD
+toggle_button = 5
+start_button = 6
+timer = 30
+active = 1
+count = 0
+new_button = 1
+x0 = 14
+i0 = 14
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# Define Board Components
+i2c = io.I2C(board.SCL, board.SDA)
+t_display = adafruit_ht16k33.segments.Seg14x4(i2c, address=0x71)
+# Button LED controller
+b_leds = neopixel.NeoPixel(NPIN, num_pixels, brightness=10, auto_write=False)
+# Button Switch definition
+buttonpins = [board.D0, board.D1, board.D2, board.D3, board.D4, board.D5,
+              board.D6, board.D7, board.D8, board.D9, board.D10, board.D11]
+# Array of buttons
+buttons = []
+for pin in buttonpins:
+    button = digitalio.DigitalInOut(pin)
+    button.direction = digitalio.Direction.INPUT
+    button.pull = digitalio.Pull.UP
+    buttons.append(button)
+
+# Digital I/O
+active_flag = digitalio.DigitalInOut(board.D14)
+start_flag1 = digitalio.DigitalInOut(board.D15)
+start_flag2 = digitalio.DigitalInOut(board.D16)
+
+# active flag for countdown state
+active_flag.direction = digitalio.Direction.INPUT
+
+# start flags for timer value & start
+# 01 = start @ 30 secs
+# 10 = start @ 60 secs
+# 11 = start @ 90 secs
+# 00 = stop
+start_flag1.direction = digitalio.Direction.OUTPUT
+start_flag2.direction = digitalio.Direction.OUTPUT
+
+# Software Functions
+# Random LED Function
+def random_led(b):
+    return (random.randint(0, b-1))
+
+# LED Reset to clear
+def reset_leds(col):
+    # print("LED Reset")
+    b_leds.fill(col)
+
+def toggle_pre():
+    b_leds[toggle_button] = WHITE
+    b_leds.show()
+    time.sleep(0.2)
+    b_leds[toggle_button] = BLACK
+    b_leds.show()
+    
+def toggle_time():
+    time.sleep(0.2)
+    
+def pregame():
+    t_display.print('    ')
+    t_display.print('SELE')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('ELEC')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('LECT')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('ECT ')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('CT T')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('T TI')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print(' TIM')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('TIME')
+    t_display.show()
+    time.sleep(1)
+    t_display.print('IME ')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('ME  ')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('E   ')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('    ')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('   S')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print('  SE')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    t_display.print(' SEL')
+    t_display.show()
+    time.sleep(0.5)
+    toggle_pre()
+    
+# Initialize Unit
+reset_leds(BLACK)
+t_display.print(count)
+t_display.show()
+
+start_flag1.value = 0
+start_flag2.value = 0
+
+while True:
+    if game_state == 0:
+        pregame()
+    active = active_flag.value
+    print("active flag is %d" % active_flag.value)
+    while active == 1:
+        if new_button == 1:
+            x = random_led(num_pixels)
+            # print("x is %d" % x)
+            # print("x0 is %d" % x0)
+            while x0 == x:
+                x = random_led(num_pixels)
+                # print("x0, x were equal - new random")
+            reset_leds(BLACK)
+            b_leds[x] = WHITE
+            # print("LED #%d Lit" % x)
+            b_leds.show()
+            new_button = 0
+            x0 = x
+    # monitor button presses
+        for button in buttons:
+            if not button.value:  # pressed?
+                i = buttons.index(button)
+                i0 = i
+                # print("Button #%d Pressed" % i)
+                if i == x:
+                    count = count + 1
+                    # print("Count is %d" % count)
+                    t_display.print('    ')
+                    t_display.print(count)
+                    t_display.show()
+                    new_button = 1
+        active = active_flag.value
+
+# TO DO
+# - Timer Service
+# - Switch Manifold
+# - Configurable - Timer
+# - Reaction Time Algorithm
+# -
+# Start Timer for the unit
+#    a = time.monotonic_ns()
+#    b = time.monotonic_ns()
+#    c = b - a
+#    if c < 1000001:
+#        b = time.monotonic_ns()
+#    else:
+#        timer = timer - 1
+#    if timer < 0:
+#        print("Time's Up")
+#        active = 0
+# choose random LED
