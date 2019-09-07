@@ -45,7 +45,6 @@ def timer_start():
     t_display.print('5BDL')
     t_display.show()
     time.sleep(2)
-
     t_display.print('    ')
     t_display.print('RDY')
     t_display.show()
@@ -57,44 +56,75 @@ def timer_start():
     t_display.print('GO')
     time.sleep(.5)
 
+def get_mode():
+    if fstart1 == False and fstart2 == False:
+        timer = 0
+    elif fstart1 == False and fstart2 == True:
+        timer = 30
+    elif fstart1 == True and fstart2 == False:
+        timer = 60
+    elif fstart1 == True and fstart2 == True:
+        timer = 90
+    print("timer is %d" % timer)
+    return timer
+    
+def countdown(a):
+    while a >= 0:
+        t_display.print(a)
+        t_display.show()
+        time.sleep(1)
+        a = a - 1
+        if a == 0:
+            active_flag.value = False
+            t_display.print('TIME')
+            time.sleep(0.1)
+            t_display.show()
+            active = 0
+            return active
+            
+def idle():
+    t_display.print('5BDL')
+    t_display.show()
+
 # run once
 # timer_start()
 t_display.print('5BDL')
 t_display.show()
 
-# fstart1 = False
-# fstart2 = False
+# fstart1 = True
+# fstart2 = True
 fstart = 0
 
-# main loop
+# main loop 
 while True:
     fstart1 = start_flag1.value
     fstart2 = start_flag2.value
-    if fstart1 == False and fstart2 == False:
-        fstart = 0
-    elif fstart1 == False and fstart2 == True:
-        fstart = 1
-        timer = 30
-        print("timer is %d" % timer)
-    elif fstart1 == True and fstart2 == False:
-        fstart = 1
-        timer = 60
-        print("timer is %d" % timer)
-    elif fstart1 == True and fstart2 == True:
-        fstart = 1
-        timer = 90
-        print("timer is %d" % timer)
-    while fstart == 1:
-        print("fstart loop")
+    timer = get_mode()
+    print("timer is %d" % timer)
+    if timer > 0:
+        active_flag.value = True
         timer_start()
-        while active == 1:
-            active_flag.value = True
-            t_display.print(timer)
-            t_display.show()
-            time.sleep(1)
-            timer = timer - 1
-            if timer == -1:
-                active_flag.value = False
-                t_display.print('TIME')
-                t_display.show()
-                active = 0
+        active = countdown(timer)
+        print("active is %d" % active)
+        if active == 0:
+            active_flag.value = False
+    elif timer == 0:
+        idle() 
+    
+#    while fstart == 1:
+#        print("fstart loop")
+#        timer_start()
+#        print("fstart1 is %d" % fstart1)
+#        print("fstart2 is %d" % fstart2)
+#        print("fstart is %d" % fstart)
+#        while active == 1:
+#            active_flag.value = True
+#            t_display.print(timer)
+#            t_display.show()
+#            time.sleep(1)
+#            timer = timer - 1
+#            if timer == 0:
+#                active_flag.value = False
+#                t_display.print('TIME')
+#                t_display.show()
+#                active = 0
